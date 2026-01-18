@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  mcp-backend:
+    build:
+      context: ./services/mcp
+    ports:
+      - "4000:4000"
+    environment:
+      MCP_PORT: 4000
+      DATABASE_PATH: /app/data/intake.db
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+    volumes:
+      - ./services/mcp/data:/app/data
+
+  web:
+    build:
+      context: ./services/web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4000}
+    depends_on:
+      - mcp-backend
+
+  agent:
+    build:
+      context: ./services/agent
+    environment:
+      MCP_BACKEND_URL: ${MCP_BACKEND_URL:-http://mcp-backend:4000}
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      - mcp-backend
